@@ -6,6 +6,9 @@ package com.infiniteautomation.mango.rest.latest;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,10 +23,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.infiniteautomation.mango.jwt.JwtSignerVerifier;
 import com.infiniteautomation.mango.rest.latest.exception.BadRequestException;
 import com.infiniteautomation.mango.rest.latest.model.jwt.HeaderClaimsModel;
+import com.infiniteautomation.mango.rest.latest.model.user.UserModel;
 import com.infiniteautomation.mango.spring.components.PasswordResetService;
+import com.serotonin.m2m2.Common;
+import com.serotonin.m2m2.db.dao.SystemSettingsDao;
 import com.serotonin.m2m2.i18n.ProcessResult;
 import com.serotonin.m2m2.i18n.TranslatableMessage;
+import com.serotonin.m2m2.vo.User;
 import com.serotonin.m2m2.vo.Validatable;
+import com.serotonin.m2m2.web.mvc.spring.security.MangoSessionRegistry;
 import com.serotonin.m2m2.web.mvc.spring.security.permissions.AnonymousAccess;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -47,10 +55,12 @@ import io.swagger.annotations.ApiParam;
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
+    private final MangoSessionRegistry sessionRegistry;
 
     @Autowired
-    public PasswordResetController(PasswordResetService passwordResetService) {
+    public PasswordResetController(PasswordResetService passwordResetService, MangoSessionRegistry sessionRegistry) {
         this.passwordResetService = passwordResetService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @ApiOperation(value = "Sends the user an email containing a password reset link")
@@ -131,6 +141,47 @@ public class PasswordResetController {
         return response;
     }
 
+
+    @ApiOperation(value = "Change admin password and set system locale, system timezone", notes = "Superadmin permission required")
+    @RequestMapping(method = RequestMethod.POST, value="/system-setup")
+    @PreAuthorize("isAdmin() and isPasswordAuthenticated()")
+    public ResponseEntity<UserModel> systemSetup(
+            HttpServletRequest request,
+            @RequestBody SystemSetupRequest body) {
+        body.ensureValid();
+        User update = passwordResetService.systemSetup(body.getPassword(), body.getSystemSettings());
+        sessionRegistry.userUpdated(request, update);
+        return new ResponseEntity<UserModel>(new UserModel(update), HttpStatus.OK);
+    }
+
+    public static class SystemSetupRequest implements Validatable {
+        String password;
+        Map<String, Object> systemSettings;
+
+        public String getPassword() {
+            return password;
+        }
+        public void setPassword(String password) {
+            this.password = password;
+        }
+        public Map<String, Object> getSystemSettings() {
+            return systemSettings;
+        }
+        public void setSystemSettings(Map<String, Object> systemSettings) {
+            this.systemSettings = systemSettings;
+        }
+
+        @Override
+        public void validate(ProcessResult response) {
+            SystemSettingsDao.instance.validate(systemSettings, response, Common.getUser());
+        }
+
+        @Override
+        public String toString() {
+            return "SystemSetupRequest [password=" + password + ", systemSettings=" + systemSettings + "]";
+        }
+
+    }
 
     public static class CreateTokenRequest implements Validatable {
         String username;

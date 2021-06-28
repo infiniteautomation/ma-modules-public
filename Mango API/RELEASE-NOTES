@@ -16,6 +16,7 @@
 * Add human readable dates to events model
 * Add lifecycle state to DataSource and DataPoint models
 * Add new event type STATE_CHANGE to DAO notification WebSockets
+* Add endpoint to set system timezone, language and admin password
 
 *Version 3.7.0*
 * Upgraded to work with core version 3.7.x
