@@ -144,7 +144,7 @@ public class PasswordResetController {
 
     @ApiOperation(value = "Change admin password and set system locale, system timezone", notes = "Superadmin permission required")
     @RequestMapping(method = RequestMethod.POST, value="/system-setup")
-    @PreAuthorize("isAdmin() and isPasswordAuthenticated()")
+    @PreAuthorize("isPasswordAuthenticated()")
     public ResponseEntity<UserModel> systemSetup(
             HttpServletRequest request,
             @RequestBody SystemSetupRequest body) {
