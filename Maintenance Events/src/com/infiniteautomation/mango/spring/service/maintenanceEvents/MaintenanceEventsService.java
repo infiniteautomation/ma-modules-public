@@ -322,13 +322,20 @@ public class MaintenanceEventsService extends AbstractVOService<MaintenanceEvent
 
     @Override
     public ProcessResult validate(MaintenanceEventVO vo, PermissionHolder user) {
-        return commonValidation(vo, user);
+        ProcessResult result = commonValidation(vo, user);
+        permissionService.validatePermission(result, "togglePermission", user, vo.getTogglePermission());
+        return result;
+    }
+
+    @Override
+    public ProcessResult validate(MaintenanceEventVO existing, MaintenanceEventVO vo, PermissionHolder user) {
+        ProcessResult result = commonValidation(vo, user);
+        permissionService.validatePermission(result, "togglePermission", user, existing.getTogglePermission(), vo.getTogglePermission());
+        return result;
     }
 
     public ProcessResult commonValidation(MaintenanceEventVO vo, PermissionHolder user) {
         ProcessResult response = super.validate(vo, user);
-
-        permissionService.validatePermission(response, "togglePermission", user, vo.getTogglePermission());
 
         if((vo.getDataSources().size() < 1) &&(vo.getDataPoints().size() < 1)) {
             response.addContextualMessage("dataSources", "validate.invalidValue");

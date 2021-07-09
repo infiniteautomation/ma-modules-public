@@ -90,8 +90,8 @@ public class WatchListService extends AbstractVOService<WatchListVO, WatchListDa
     public ProcessResult validate(WatchListVO existing, WatchListVO vo, PermissionHolder savingUser) {
         ProcessResult response = commonValidation(vo, savingUser);
 
-        permissionService.validatePermission(response, "readPermission", savingUser, vo.getReadPermission());
-        permissionService.validatePermission(response, "editPermission", savingUser, vo.getEditPermission());
+        permissionService.validatePermission(response, "readPermission", savingUser, existing.getReadPermission(), vo.getReadPermission());
+        permissionService.validatePermission(response, "editPermission", savingUser, existing.getEditPermission(), vo.getEditPermission());
 
         return response;
     }
