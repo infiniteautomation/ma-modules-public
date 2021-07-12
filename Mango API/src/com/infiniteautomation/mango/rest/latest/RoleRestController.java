@@ -78,7 +78,7 @@ public class RoleRestController {
     @ApiOperation(value = "Query Roles", response = RoleQueryResult.class)
     @RequestMapping(method = RequestMethod.GET)
     public StreamedArrayWithTotal query(@AuthenticationPrincipal PermissionHolder user, @ApiIgnore ASTNode rql) {
-        return doQuery(rql, user);
+        return new StreamedVORqlQueryWithTotal<>(service, rql, null, null, null, vo -> mapping.map(vo, user, mapper));
     }
 
     @ApiOperation(value = "Get a Role")
@@ -128,14 +128,6 @@ public class RoleRestController {
     public ResponseEntity<RoleModel> delete(@ApiParam(value = "XID of Role to delete", required = true, allowMultiple = false) @PathVariable String xid,
             @AuthenticationPrincipal PermissionHolder user) {
         return ResponseEntity.ok(mapping.map(service.delete(xid), user, mapper));
-    }
-
-    private StreamedArrayWithTotal doQuery(ASTNode rql, PermissionHolder user) {
-        if (permissionService.hasAdminRole(user)) {
-            return new StreamedVORqlQueryWithTotal<>(service, rql, null, null, null, vo -> mapping.map(vo, user, mapper));
-        } else {
-            return new StreamedVORqlQueryWithTotal<>(service, rql, null, null, null, vo -> service.hasReadPermission(user, vo), vo -> mapping.map(vo, user, mapper));
-        }
     }
 
 }
